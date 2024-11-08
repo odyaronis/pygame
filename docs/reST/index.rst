@@ -1,213 +1,126 @@
-Pygame Front Page
-=================
+import pygame
+import random
+import sys
+
+# Initialize pygame
+pygame.init()
+
+# Screen settings
+WIDTH, HEIGHT = 800, 600
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Penalty Kick Game")
+
+# Colors
+WHITE = (255, 255, 255)
+BLACK = (0, 0, 0)
+GREEN = (34, 177, 76)
+BLUE = (0, 162, 232)
+RED = (237, 28, 36)
+
+# Load assets
+ball_img = pygame.image.load("path/to/your/ball.png")  # Replace with the path to your ball image
+goalkeeper_img = pygame.image.load("path/to/your/goalkeeper.png")  # Replace with path to your goalkeeper image
+ball_img = pygame.transform.scale(ball_img, (50, 50))  # Resize ball
+goalkeeper_img = pygame.transform.scale(goalkeeper_img, (100, 100))  # Resize goalkeeper
+
+# Game variables
+ball_pos = [WIDTH // 2, HEIGHT - 100]
+goalkeeper_pos = [WIDTH // 2 - 50, 200]
+goalkeeper_move = random.choice([-1, 1])
+ball_speed = [0, -15]
+score = 0
+attempts = 5
+
+# Fonts
+font = pygame.font.Font(None, 36)
+
+def reset_ball():
+    global ball_pos, ball_speed
+    ball_pos = [WIDTH // 2, HEIGHT - 100]
+    ball_speed = [0, -15]
+
+def display_text(text, color, position):
+    text_surface = font.render(text, True, color)
+    screen.blit(text_surface, position)
+
+# Game loop
+running = True
+kick = False
+goal = False
+while running:
+    screen.fill(GREEN)
+
+    # Draw goal post
+    pygame.draw.rect(screen, WHITE, (WIDTH // 2 - 150, 100, 300, 10))  # Top bar
+    pygame.draw.rect(screen, WHITE, (WIDTH // 2 - 150, 100, 10, 100))  # Left post
+    pygame.draw.rect(screen, WHITE, (WIDTH // 2 + 140, 100, 10, 100))  # Right post
+
+    # Player input
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+            pygame.quit()
+            sys.exit()
+        elif event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_LEFT:
+                ball_speed[0] = -5
+                kick = True
+            elif event.key == pygame.K_RIGHT:
+                ball_speed[0] = 5
+                kick = True
+            elif event.key == pygame.K_SPACE:
+                kick = True
+
+    # Move goalkeeper back and forth
+    goalkeeper_pos[0] += goalkeeper_move * 5
+    if goalkeeper_pos[0] <= WIDTH // 2 - 150 or goalkeeper_pos[0] >= WIDTH // 2 + 50:
+        goalkeeper_move *= -1  # Change direction at boundaries
+
+    # Move ball if kicked
+    if kick:
+        ball_pos[0] += ball_speed[0]
+        ball_pos[1] += ball_speed[1]
+
+    # Check if goal scored
+    if (WIDTH // 2 - 150 < ball_pos[0] < WIDTH // 2 + 140) and ball_pos[1] < 100:
+        if abs(ball_pos[0] - goalkeeper_pos[0]) > 50:  # Goalkeeper misses
+            goal = True
+            score += 1
+            display_text("GOAL!", BLUE, (WIDTH // 2 - 40, HEIGHT // 2))
+            pygame.display.update()
+            pygame.time.delay(1000)
+            reset_ball()
+            kick = False
+        else:
+            display_text("SAVED!", RED, (WIDTH // 2 - 40, HEIGHT // 2))
+            pygame.display.update()
+            pygame.time.delay(1000)
+            reset_ball()
+            kick = False
+
+    # Check if ball goes out of bounds
+    if ball_pos[1] < 0 or ball_pos[0] < 0 or ball_pos[0] > WIDTH:
+        reset_ball()
+        kick = False
+        attempts -= 1
+
+    # Draw ball and goalkeeper
+    screen.blit(ball_img, ball_pos)
+    screen.blit(goalkeeper_img, goalkeeper_pos)
+
+    # Display score and attempts
+    display_text(f"Score: {score}", WHITE, (10, 10))
+    display_text(f"Attempts: {attempts}", WHITE, (WIDTH - 150, 10))
+
+    # Check game over
+    if attempts <= 0:
+        display_text("Game Over!", RED, (WIDTH // 2 - 60, HEIGHT // 2))
+        pygame.display.update()
+        pygame.time.delay(2000)
+        running = False
+
+    pygame.display.update()
+    pygame.time.delay(30)
+
+pygame.quit()
 
-.. toctree::
-   :maxdepth: 2
-   :glob:
-   :hidden:
-
-   ref/*
-   tut/*
-   tut/en/**/*
-   tut/ko/**/*
-   c_api
-   filepaths
-   logos
-
-Quick start
------------
-
-Welcome to pygame! Once you've got pygame installed (:code:`pip install pygame` or
-:code:`pip3 install pygame` for most people), the next question is how to get a game
-loop running. Pygame, unlike some other libraries, gives you full control of program
-execution. That freedom means it is easy to mess up in your initial steps.
-
-Here is a good example of a basic setup (opens the window, updates the screen, and handles events)--
-
-.. literalinclude:: ref/code_examples/base_script.py
-
-Here is a slightly more fleshed out example, which shows you how to move something
-(a circle in this case) around on screen--
-
-.. literalinclude:: ref/code_examples/base_script_example.py
-
-For more in depth reference, check out the :ref:`tutorials-reference-label`
-section below, check out a video tutorial (`I'm a fan of this one
-<https://www.youtube.com/watch?v=AY9MnQ4x3zk>`_), or reference the API
-documentation by module.
-
-Documents
----------
-
-`Readme`_
-  Basic information about pygame: what it is, who is involved, and where to find it.
-
-`Install`_
-  Steps needed to compile pygame on several platforms.
-  Also help on finding and installing prebuilt binaries for your system.
-
-:doc:`filepaths`
-  How pygame handles file system paths.
-
-:doc:`Pygame Logos <logos>`
-   The logos of Pygame in different resolutions.
-
-
-`LGPL License`_
-  This is the license pygame is distributed under.
-  It provides for pygame to be distributed with open source and commercial software.
-  Generally, if pygame is not changed, it can be used with any type of program.
-
-.. _tutorials-reference-label:
-
-Tutorials
----------
-
-:doc:`Introduction to Pygame <tut/PygameIntro>`
-  An introduction to the basics of pygame.
-  This is written for users of Python and appeared in volume two of the Py magazine.
-
-:doc:`Import and Initialize <tut/ImportInit>`
-  The beginning steps on importing and initializing pygame.
-  The pygame package is made of several modules.
-  Some modules are not included on all platforms.
-
-:doc:`How do I move an Image? <tut/MoveIt>`
-  A basic tutorial that covers the concepts behind 2D computer animation.
-  Information about drawing and clearing objects to make them appear animated.
-
-:doc:`Chimp Tutorial, Line by Line <tut/ChimpLineByLine>`
-  The pygame examples include a simple program with an interactive fist and a chimpanzee.
-  This was inspired by the annoying flash banner of the early 2000s.
-  This tutorial examines every line of code used in the example.
-
-:doc:`Sprite Module Introduction <tut/SpriteIntro>`
-  Pygame includes a higher level sprite module to help organize games.
-  The sprite module includes several classes that help manage details found in almost all games types.
-  The Sprite classes are a bit more advanced than the regular pygame modules,
-  and need more understanding to be properly used.
-
-:doc:`Surfarray Introduction <tut/SurfarrayIntro>`
-  Pygame used the NumPy python module to allow efficient per pixel effects on images.
-  Using the surface arrays is an advanced feature that allows custom effects and filters.
-  This also examines some of the simple effects from the pygame example, arraydemo.py.
-
-:doc:`Camera Module Introduction <tut/CameraIntro>`
-  Pygame, as of 1.9, has a camera module that allows you to capture images,
-  watch live streams, and do some basic computer vision.
-  This tutorial covers those use cases.
-
-:doc:`Newbie Guide <tut/newbieguide>`
-  A list of thirteen helpful tips for people to get comfortable using pygame.
-
-:doc:`Making Games Tutorial <tut/MakeGames>`
-  A large tutorial that covers the bigger topics needed to create an entire game.
-
-:doc:`Display Modes <tut/DisplayModes>`
-  Getting a display surface for the screen.
-
-:doc:`한국어 튜토리얼 (Korean Tutorial) <tut/ko/빨간블록 검은블록/개요>`
-  빨간블록 검은블록
-
-
-Reference
----------
-
-:ref:`genindex`
-  A list of all functions, classes, and methods in the pygame package.
-
-:doc:`ref/bufferproxy`
-  An array protocol view of surface pixels
-
-:doc:`ref/color`
-  Color representation.
-
-:doc:`ref/cursors`
-  Loading and compiling cursor images.
-
-:doc:`ref/display`
-  Configure the display surface.
-
-:doc:`ref/draw`
-  Drawing simple shapes like lines and ellipses to surfaces.
-
-:doc:`ref/event`
-  Manage the incoming events from various input devices and the windowing platform.
-
-:doc:`ref/examples`
-  Various programs demonstrating the use of individual pygame modules.
-
-:doc:`ref/font`
-  Loading and rendering TrueType fonts.
-
-:doc:`ref/freetype`
-  Enhanced pygame module for loading and rendering font faces.
-
-:doc:`ref/gfxdraw`
-  Anti-aliasing draw functions.
-
-:doc:`ref/image`
-  Loading, saving, and transferring of surfaces.
-
-:doc:`ref/joystick`
-  Manage the joystick devices.
-
-:doc:`ref/key`
-  Manage the keyboard device.
-
-:doc:`ref/locals`
-  Pygame constants.
-
-:doc:`ref/mixer`
-  Load and play sounds
-
-:doc:`ref/mouse`
-  Manage the mouse device and display.
-
-:doc:`ref/music`
-  Play streaming music tracks.
-
-:doc:`ref/pygame`
-  Top level functions to manage pygame.
-
-:doc:`ref/pixelarray`
-  Manipulate image pixel data.
-
-:doc:`ref/rect`
-  Flexible container for a rectangle.
-
-:doc:`ref/scrap`
-  Native clipboard access.
-
-:doc:`ref/sndarray`
-  Manipulate sound sample data.
-
-:doc:`ref/sprite`
-  Higher level objects to represent game images.
-
-:doc:`ref/surface`
-  Objects for images and the screen.
-
-:doc:`ref/surfarray`
-  Manipulate image pixel data.
-
-:doc:`ref/tests`
-  Test pygame.
-
-:doc:`ref/time`
-  Manage timing and framerate.
-
-:doc:`ref/transform`
-  Resize and move images.
-
-:doc:`pygame C API <c_api>`
-  The C api shared amongst pygame extension modules.
-
-:ref:`search`
-  Search pygame documents by keyword.
-
-.. _Readme: ../wiki/about
-
-.. _Install: ../wiki/GettingStarted#Pygame%20Installation
-
-.. _LGPL License: LGPL.txt
